@@ -32,7 +32,7 @@ soundterror:
     nodePortEnabled: false
     nodePort: 30443
   ingress:
-    host: soundterror.local
+    host: soundterror-kubitos.biester.vip
     tlsEnabled: true
     tlsSecretName: my-tls-secret
 
