@@ -5,6 +5,8 @@ metadata:
   namespace: {{ .Values.soundterror.nameSpace }}
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/ssl-verify: "off"
 spec:
   {{- if .Values.soundterror.ingress.tlsEnabled }}
   tls:
