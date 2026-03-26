@@ -1,16 +1,17 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "soundterror.fullname" . }}
-  labels:
-    {{- include "soundterror.labels" . | nindent 4 }}
+  name: {{ .Values.soundterror.name }}-service
+  namespace: {{ .Values.soundterror.nameSpace }}
 spec:
-  type: {{ .Values.service.type }}
   selector:
-    {{- include "soundterror.selectorLabels" . | nindent 4 }}
+    app: {{ .Values.soundterror.name }}
   ports:
-    - name: https
-      protocol: TCP
-      port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.targetPort }}
+    - protocol: TCP
+      port: {{ .Values.soundterror.service.port }}
+      targetPort: {{ .Values.soundterror.service.targetPort }}
+      {{- if and (eq .Values.soundterror.service.type "NodePort") .Values.soundterror.service.nodePortEnabled }}
+      nodePort: {{ .Values.soundterror.service.nodePort }}
+      {{- end }}
+  type: {{ .Values.soundterror.service.type }}
 

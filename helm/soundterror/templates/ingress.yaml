@@ -1,36 +1,28 @@
-{{- if .Values.ingress.enabled }}
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "soundterror.fullname" . }}
-  labels:
-    {{- include "soundterror.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  name: {{ .Values.soundterror.name }}-ingress
+  namespace: {{ .Values.soundterror.nameSpace }}
   annotations:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
-  {{- with .Values.ingress.className }}
-  ingressClassName: {{ . }}
+  {{- if .Values.soundterror.ingress.tlsEnabled }}
+  tls:
+    - hosts:
+        - {{ .Values.soundterror.ingress.host }}
+      secretName: {{ .Values.soundterror.secrets | default .Values.soundterror.ingress.tlsSecretName }}
   {{- end }}
+
+  ingressClassName: {{ .Values.ingress.className }}
   rules:
-    {{- range .Values.ingress.hosts }}
-    - host: {{ .host | quote }}
+    - host: {{ .Values.soundterror.ingress.host }}
       http:
         paths:
-          {{- range .paths }}
-          - path: {{ .path }}
-            pathType: {{ .pathType }}
+          - path: /
+            pathType: {{ .Values.ingress.pathType }}
             backend:
               service:
-                name: {{ include "soundterror.fullname" $ }}
+                name: {{ .Values.soundterror.name }}-service
                 port:
-                  number: {{ $.Values.service.port }}
-          {{- end }}
-    {{- end }}
-  {{- with .Values.ingress.tls }}
-  tls:
-    {{- toYaml . | nindent 4 }}
-  {{- end }}
-{{- end }}
+                  number: {{ .Values.soundterror.service.port }}
 

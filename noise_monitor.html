@@ -3,64 +3,643 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lautstärke-Monitor</title>
+  <title>Lautstaerke-Monitor</title>
   <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #111827;
+      --text: #e5e7eb;
+      --muted: #94a3b8;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err: #ef4444;
+      --bar-bg: #1f2937;
+      --bar-fill: #38bdf8;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(180deg, #0f172a, #111827);
-      color: #e5e7eb;
       min-height: 100vh;
       display: grid;
       place-items: center;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 16px;
     }
+
     main {
-      width: min(720px, calc(100vw - 32px));
-      background: rgba(17, 24, 39, 0.9);
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      width: min(760px, 100%);
+      background: color-mix(in srgb, var(--panel) 92%, black);
+      border: 1px solid #334155;
       border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+      padding: 24px;
+      box-shadow: 0 18px 48px rgba(0, 0, 0, 0.35);
     }
+
     h1 {
-      margin-top: 0;
-      font-size: clamp(2rem, 4vw, 3rem);
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 3.8vw, 2.4rem);
+      line-height: 1.2;
     }
-    p {
-      line-height: 1.6;
-      color: #cbd5e1;
+
+    .subtitle {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.5;
     }
-    code {
-      background: rgba(15, 23, 42, 0.8);
-      padding: 0.2rem 0.4rem;
-      border-radius: 6px;
-      color: #93c5fd;
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
     }
-    .badge {
+
+    .pill {
       display: inline-block;
-      background: #16a34a;
-      color: white;
-      padding: 0.35rem 0.65rem;
+      font-size: 0.85rem;
       border-radius: 999px;
+      padding: 6px 12px;
+      border: 1px solid #475569;
+      color: var(--muted);
+    }
+
+    .pill.ok {
+      background: color-mix(in srgb, var(--ok) 28%, transparent);
+      border-color: color-mix(in srgb, var(--ok) 50%, #475569);
+      color: #dcfce7;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .input {
+      border: 1px solid #475569;
+      background: #0b1220;
+      color: var(--text);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-width: 220px;
+    }
+
+    .settings {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .settings label {
+      color: var(--muted);
       font-size: 0.9rem;
-      margin-bottom: 1rem;
+    }
+
+    .settings input[type="range"] {
+      width: 100%;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.06s ease, opacity 0.2s ease;
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    #startBtn {
+      background: var(--ok);
+      color: #052e16;
+    }
+
+    #stopBtn {
+      background: #334155;
+      color: var(--text);
+    }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .meter {
+      background: var(--bar-bg);
+      height: 22px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid #334155;
+      margin-bottom: 10px;
+    }
+
+    #levelBar {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #22c55e, #eab308, #ef4444);
+      transition: width 80ms linear;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .card {
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+      background: #0b1220;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .value {
+      margin-top: 6px;
+      font-size: 1.35rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    #status {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      background: #0b1220;
+      line-height: 1.4;
+      font-size: 1.05rem;
+    }
+
+    #status.warn {
+      border-color: color-mix(in srgb, var(--warn) 55%, #334155);
+      color: #fef3c7;
+    }
+
+    #status.error {
+      border-color: color-mix(in srgb, var(--err) 55%, #334155);
+      color: #fecaca;
+    }
+
+    .events {
+      margin-top: 16px;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      background: #0b1220;
+      padding: 12px;
+    }
+
+    .events h2 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    #eventsSummary {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
+    #eventsList {
+      margin: 0;
+      padding-left: 20px;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    #eventsList li {
+      margin: 4px 0;
+      color: #cbd5e1;
+      font-variant-numeric: tabular-nums;
+      font-size: 1.02rem;
+    }
+
+    #alertOverlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(2, 6, 23, 0.76);
+      z-index: 999;
+      padding: 20px;
+    }
+
+    #alertOverlay.visible {
+      display: flex;
+    }
+
+    #alertGif {
+      width: min(78vw, 760px);
+      max-height: 78vh;
+      border-radius: 14px;
+      border: 2px solid #475569;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+    }
+
+    @media (max-width: 620px) {
+      .metrics {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
   <main>
-    <div class="badge">HTTPS aktiv</div>
-    <h1>🎤 Lautstärke-Monitor läuft</h1>
-    <p>
-      Der Container und das Helm-Chart wurden erfolgreich für diese Anwendung vorbereitet.
-      Diese Seite dient als Standard-Startseite für <code>/</code>.
+    <div class="row">
+      <span class="pill ok">HTTPS aktiv</span>
+      <span id="runState" class="pill">Monitor inaktiv</span>
+    </div>
+
+    <h1>Lautstaerke-Monitor</h1>
+    <p class="subtitle">
+      Starte den Mikrofonzugriff und beobachte den aktuellen Pegel als dBFS-Wert.
+      Hinweis: Im Browser muss der Zugriff auf das Mikrofon erlaubt sein.
     </p>
-    <p>
-      Wenn du bereits eine eigene Frontend-Datei für den Monitor hast, kannst du sie einfach
-      als <code>noise_monitor.html</code> in das Projekt legen oder über <code>INDEX_FILE</code>
-      konfigurieren.
+
+    <div class="controls">
+      <button id="startBtn" type="button">Monitoring starten</button>
+      <button id="stopBtn" type="button" disabled>Monitoring stoppen</button>
+      <input id="stopPassword" class="input" type="password" placeholder="Passwort zum Stoppen" autocomplete="current-password">
+    </div>
+
+    <div class="settings">
+      <label for="thresholdInput">Pegel-Schwelle (dBFS)</label>
+      <strong id="thresholdLive">-20.0 dBFS</strong>
+      <input id="thresholdInput" type="range" min="-60" max="0" step="0.5" value="-20">
+
+      <label for="loudLimitInput">GIF nach X Ueberschreitungen</label>
+      <strong id="loudLimitLive">15</strong>
+      <input id="loudLimitInput" class="input" type="number" min="1" max="500" step="1" value="15">
+    </div>
+
+    <div class="meter" aria-label="Lautstaerke-Pegel">
+      <div id="levelBar"></div>
+    </div>
+
+    <div class="metrics">
+      <div class="card">
+        <div class="label">Aktuell</div>
+        <div id="currentDb" class="value">-inf dBFS</div>
+      </div>
+      <div class="card">
+        <div class="label">Peak</div>
+        <div id="peakDb" class="value">-inf dBFS</div>
+      </div>
+      <div class="card">
+        <div class="label">Schwellwert</div>
+        <div id="threshold" class="value">-20.0 dBFS</div>
+      </div>
+      <div class="card">
+        <div class="label">Startzeit</div>
+        <div id="startTime" class="value">--:--:--</div>
+      </div>
+    </div>
+
+    <p id="status">
+      Bereit. Klicke auf "Monitoring starten", um den Lautstaerke-Monitor zu aktivieren.
     </p>
+
+    <section class="events">
+      <h2>Ueberschreitungen</h2>
+      <p id="eventsSummary">0 / 15 Ereignisse bis zum GIF</p>
+      <ol id="eventsList"></ol>
+    </section>
   </main>
+
+  <div id="alertOverlay" aria-hidden="true">
+    <img id="alertGif" src="/1665003638.bazbadger_bazbadger_full.gif" alt="Badger Alarm">
+  </div>
+
+  <script>
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const statusEl = document.getElementById("status");
+    const runStateEl = document.getElementById("runState");
+    const levelBar = document.getElementById("levelBar");
+    const currentDbEl = document.getElementById("currentDb");
+    const peakDbEl = document.getElementById("peakDb");
+    const startTimeEl = document.getElementById("startTime");
+    const thresholdEl = document.getElementById("threshold");
+    const thresholdInputEl = document.getElementById("thresholdInput");
+    const thresholdLiveEl = document.getElementById("thresholdLive");
+    const stopPasswordEl = document.getElementById("stopPassword");
+    const eventsListEl = document.getElementById("eventsList");
+    const eventsSummaryEl = document.getElementById("eventsSummary");
+    const loudLimitInputEl = document.getElementById("loudLimitInput");
+    const loudLimitLiveEl = document.getElementById("loudLimitLive");
+    const alertOverlayEl = document.getElementById("alertOverlay");
+
+    let alertThresholdDb = -20;
+    let stream = null;
+    let audioContext = null;
+    let analyser = null;
+    let buffer = null;
+    let rafId = null;
+    let peakDb = -Infinity;
+    let wasAboveThreshold = false;
+    let loudEventCount = 0;
+    let loudLimit = 15;
+    let thresholdLocked = false;
+    let loudLimitLocked = false;
+
+    function setStatus(message, level = "info") {
+      statusEl.textContent = message;
+      statusEl.classList.remove("warn", "error");
+      if (level === "warn") {
+        statusEl.classList.add("warn");
+      }
+      if (level === "error") {
+        statusEl.classList.add("error");
+      }
+    }
+
+    function formatDb(value) {
+      if (!Number.isFinite(value)) {
+        return "-inf dBFS";
+      }
+      return `${value.toFixed(1)} dBFS`;
+    }
+
+    function applyThreshold(value) {
+      if (thresholdLocked) {
+        return;
+      }
+
+      const numericValue = Number.parseFloat(value);
+      if (!Number.isFinite(numericValue)) {
+        return;
+      }
+
+      alertThresholdDb = Math.max(-60, Math.min(0, numericValue));
+      const formatted = formatDb(alertThresholdDb);
+      thresholdEl.textContent = formatted;
+      thresholdLiveEl.textContent = formatted;
+    }
+
+    function lockThresholdSetting() {
+      thresholdLocked = true;
+      thresholdInputEl.disabled = true;
+    }
+
+    function lockLoudLimitSetting() {
+      loudLimitLocked = true;
+      loudLimitInputEl.disabled = true;
+    }
+
+    function lockProtectedSettings() {
+      lockThresholdSetting();
+      lockLoudLimitSetting();
+      setStatus("Pegel-Schwelle und GIF-Trigger sind nach Passwort-Eingabe gesperrt.");
+    }
+
+    function applyLoudLimit(value) {
+      if (loudLimitLocked) {
+        return;
+      }
+
+      const numericValue = Number.parseInt(value, 10);
+      if (!Number.isFinite(numericValue)) {
+        return;
+      }
+
+      loudLimit = Math.max(1, Math.min(500, numericValue));
+      loudLimitInputEl.value = String(loudLimit);
+      loudLimitLiveEl.textContent = String(loudLimit);
+      eventsSummaryEl.textContent = `${loudEventCount} / ${loudLimit} Ereignisse bis zum GIF`;
+    }
+
+    function showAlertGif() {
+      alertOverlayEl.classList.add("visible");
+      alertOverlayEl.setAttribute("aria-hidden", "false");
+    }
+
+    function hideAlertGif() {
+      alertOverlayEl.classList.remove("visible");
+      alertOverlayEl.setAttribute("aria-hidden", "true");
+    }
+
+    function resetEventsForSession() {
+      eventsListEl.innerHTML = "";
+      loudEventCount = 0;
+      wasAboveThreshold = false;
+      hideAlertGif();
+      eventsSummaryEl.textContent = `${loudEventCount} / ${loudLimit} Ereignisse bis zum GIF`;
+    }
+
+    function appendThresholdEvent(dbValue) {
+      const item = document.createElement("li");
+      const timestamp = new Date().toLocaleTimeString("de-DE");
+      item.textContent = `${timestamp} 🦡 Pegel ueberschritten (${formatDb(dbValue)})`;
+      eventsListEl.prepend(item);
+      loudEventCount += 1;
+      eventsSummaryEl.textContent = `${loudEventCount} / ${loudLimit} Ereignisse bis zum GIF`;
+
+      if (loudEventCount >= loudLimit) {
+        showAlertGif();
+      }
+
+      // Historie kompakt halten
+      while (eventsListEl.children.length > 50) {
+        eventsListEl.removeChild(eventsListEl.lastChild);
+      }
+    }
+
+    async function authorizeStop(password) {
+      const response = await fetch("/api/authorize-stop", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ password })
+      });
+
+      if (!response.ok) {
+        return false;
+      }
+
+      const data = await response.json();
+      return data.ok === true;
+    }
+
+    function updateUi(dbValue) {
+      currentDbEl.textContent = formatDb(dbValue);
+      if (dbValue > peakDb) {
+        peakDb = dbValue;
+      }
+      peakDbEl.textContent = formatDb(peakDb);
+
+      const normalized = Math.max(0, Math.min(1, (dbValue + 60) / 60));
+      levelBar.style.width = `${(normalized * 100).toFixed(1)}%`;
+
+      const isAboveThreshold = dbValue >= alertThresholdDb;
+      if (isAboveThreshold) {
+        setStatus("Hoher Pegel erkannt. Mikrofon ist aktuell laut.", "warn");
+      }
+
+      if (isAboveThreshold && !wasAboveThreshold) {
+        appendThresholdEvent(dbValue);
+      }
+
+      wasAboveThreshold = isAboveThreshold;
+    }
+
+    function monitorLoop() {
+      if (!analyser || !buffer) {
+        return;
+      }
+
+      analyser.getFloatTimeDomainData(buffer);
+
+      let sum = 0;
+      for (let i = 0; i < buffer.length; i += 1) {
+        sum += buffer[i] * buffer[i];
+      }
+
+      const rms = Math.sqrt(sum / buffer.length);
+      const dbValue = rms > 0 ? 20 * Math.log10(rms) : -Infinity;
+      updateUi(dbValue);
+
+      if (dbValue < alertThresholdDb) {
+        setStatus("Monitoring aktiv. Sprich oder klatsche, um den Pegel zu sehen.");
+      }
+
+      rafId = window.requestAnimationFrame(monitorLoop);
+    }
+
+    async function startMonitoring() {
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          throw new Error("Dieser Browser unterstuetzt keinen Mikrofonzugriff per WebRTC.");
+        }
+
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          },
+          video: false
+        });
+
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 2048;
+        analyser.smoothingTimeConstant = 0.2;
+
+        const source = audioContext.createMediaStreamSource(stream);
+        source.connect(analyser);
+        buffer = new Float32Array(analyser.fftSize);
+        peakDb = -Infinity;
+        resetEventsForSession();
+        startTimeEl.textContent = new Date().toLocaleString("de-DE");
+
+        runStateEl.textContent = "Monitor aktiv";
+        runStateEl.classList.add("ok");
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+        setStatus("Monitoring aktiv. Sprich oder klatsche, um den Pegel zu sehen.");
+
+        monitorLoop();
+      } catch (error) {
+        setStatus(`Start fehlgeschlagen: ${error.message}`, "error");
+        await internalStopMonitoring();
+      }
+    }
+
+    async function internalStopMonitoring() {
+      if (rafId) {
+        window.cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+
+      if (audioContext) {
+        await audioContext.close();
+        audioContext = null;
+      }
+
+      analyser = null;
+      buffer = null;
+      runStateEl.textContent = "Monitor inaktiv";
+      runStateEl.classList.remove("ok");
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      levelBar.style.width = "0%";
+      currentDbEl.textContent = "-inf dBFS";
+      startTimeEl.textContent = "--:--:--";
+      wasAboveThreshold = false;
+      hideAlertGif();
+      setStatus("Monitoring gestoppt. Du kannst jederzeit neu starten.");
+    }
+
+    async function stopMonitoring() {
+      const password = stopPasswordEl.value;
+      if (!password) {
+        setStatus("Bitte Passwort eingeben, um das Monitoring zu stoppen.", "error");
+        return;
+      }
+
+      const isAuthorized = await authorizeStop(password);
+      if (!isAuthorized) {
+        setStatus("Falsches Passwort. Stoppen ist nur mit gueltigem Passwort erlaubt.", "error");
+        return;
+      }
+
+      lockProtectedSettings();
+      stopPasswordEl.value = "";
+      await internalStopMonitoring();
+    }
+
+    startBtn.addEventListener("click", () => {
+      void startMonitoring();
+    });
+
+    stopBtn.addEventListener("click", () => {
+      void stopMonitoring();
+    });
+
+    thresholdInputEl.addEventListener("input", (event) => {
+      applyThreshold(event.target.value);
+    });
+
+    loudLimitInputEl.addEventListener("input", (event) => {
+      applyLoudLimit(event.target.value);
+    });
+
+    applyThreshold(thresholdInputEl.value);
+    applyLoudLimit(loudLimitInputEl.value);
+
+    window.addEventListener("beforeunload", () => {
+      void internalStopMonitoring();
+    });
+  </script>
 </body>
 </html>
 

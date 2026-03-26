@@ -16,7 +16,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends openssl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY server_noise_monitor.py noise_monitor.html docker-entrypoint.sh /app/
+COPY server_noise_monitor.py noise_monitor.html docker-entrypoint.sh 1665003638.bazbadger_bazbadger_full.gif /app/
 
 EXPOSE 8443
 
