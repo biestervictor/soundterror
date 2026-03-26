@@ -19,8 +19,8 @@ soundterror:
     certKey: tls-crt
     keyKey: tls-key
   image:
-    repository: soundterror
-    tag: latest
+    repository: ghcr.io/biestervictor/soundterror
+    tag: main-f559898
     pullPolicy: IfNotPresent
   deployment:
     replicas: 1
