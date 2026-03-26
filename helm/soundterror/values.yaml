@@ -1,5 +1,5 @@
 ingress:
-  className: nginx
+  className: public
   pathType: ImplementationSpecific
 
 secretstore:
