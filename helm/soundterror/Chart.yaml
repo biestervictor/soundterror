@@ -1,0 +1,7 @@
+apiVersion: v2
+name: soundterror
+description: Helm-Chart für den HTTPS-Lautstärke-Monitor auf MicroK8s
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+

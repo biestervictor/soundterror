@@ -1,0 +1,23 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: soundterror-cert-external-secret
+  namespace: {{ .Values.soundterror.nameSpace }}
+spec:
+  refreshInterval: 24h
+  secretStoreRef:
+    name: {{ .Values.secretstore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: {{ .Values.soundterror.secrets }}
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/tls
+  data:
+    - secretKey: tls.crt
+      remoteRef:
+        key: {{ .Values.soundterror.tls.certKey | default "tls-crt" | quote }}
+    - secretKey: tls.key
+      remoteRef:
+        key: {{ .Values.soundterror.tls.keyKey | default "tls-key" | quote }}
+

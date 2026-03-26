@@ -1,0 +1,23 @@
+apiVersion: external-secrets.io/v1
+kind: ExternalSecret
+metadata:
+  name: regcred-external-secret
+  namespace: {{ .Values.soundterror.nameSpace }}
+spec:
+  refreshInterval: 24h
+  secretStoreRef:
+    name: {{ .Values.secretstore.name }}
+    kind: ClusterSecretStore
+  target:
+    name: regcred
+    creationPolicy: Owner
+    template:
+      type: kubernetes.io/dockerconfigjson
+  data:
+    - secretKey: .dockerconfigjson
+      remoteRef:
+        key: imagePullSecret
+        {{- if .Values.soundterror.imagePullSecretDecodingStrategy }}
+        decodingStrategy: {{ .Values.soundterror.imagePullSecretDecodingStrategy }}
+        {{- end }}
+

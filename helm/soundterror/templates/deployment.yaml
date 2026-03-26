@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "soundterror.fullname" . }}
+  labels:
+    {{- include "soundterror.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "soundterror.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "soundterror.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ include "soundterror.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: https
+              containerPort: {{ .Values.app.port }}
+              protocol: TCP
+          env:
+            - name: HOST
+              value: {{ .Values.app.host | quote }}
+            - name: PORT
+              value: {{ .Values.app.port | quote }}
+            - name: INDEX_FILE
+              value: {{ .Values.app.indexFile | quote }}
+            {{- if .Values.tls.existingSecret }}
+            - name: TLS_SECRET_DIR
+              value: {{ .Values.tls.secretMountPath | quote }}
+            {{- end }}
+            {{- if .Values.stopPassword.existingSecret }}
+            - name: STOP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.stopPassword.existingSecret | quote }}
+                  key: {{ .Values.stopPassword.secretKey | quote }}
+            {{- else if .Values.stopPassword.value }}
+            - name: STOP_PASSWORD
+              value: {{ .Values.stopPassword.value | quote }}
+            {{- end }}
+          {{- if .Values.tls.existingSecret }}
+          volumeMounts:
+            - name: tls-secret
+              mountPath: {{ .Values.tls.secretMountPath | quote }}
+              readOnly: true
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- if .Values.tls.existingSecret }}
+      volumes:
+        - name: tls-secret
+          secret:
+            secretName: {{ .Values.tls.existingSecret | quote }}
+      {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
